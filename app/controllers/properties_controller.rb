@@ -2,6 +2,8 @@ class PropertiesController < ApplicationController
   before_action :set_property, only: %i[ show update destroy ]
   before_action :authenticate_user!, only: [:new, :create]
   before_action :check_ownership, only: [:edit, :update, :destroy]
+  include Rails.application.routes.url_helpers
+
 
   # GET /properties
   def index
@@ -15,18 +17,27 @@ class PropertiesController < ApplicationController
 
   # GET /properties/1
   def show
-    render json: @property, include: :user
+    render json: @property.as_json.merge({
+      photo_url: @property.photo.attached? ? rails_blob_url(@property.photo) : nil
+    }).merge({ user: @property.user })
   end
+
 
   # POST /properties
   def create
     @property = current_user.properties.new(property_params)
+    
     if @property.save
+      # Attach the photo if it exists
+      if params[:property][:photo]
+        @property.photo.attach(params[:property][:photo])
+      end
       render json: @property, status: :created, location: @property
     else
       render json: @property.errors, status: :unprocessable_entity
     end
   end
+
 
   # PATCH/PUT /properties/1
   def update
@@ -50,7 +61,7 @@ class PropertiesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def property_params
-      params.require(:property).permit(:user_id, :title, :price, :description, :private)
+      params.require(:property).permit(:user_id, :title, :price, :description, :private, :photo)
     end
 
     def check_ownership
