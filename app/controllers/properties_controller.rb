@@ -21,17 +21,8 @@ class PropertiesController < ApplicationController
 
   # GET /properties/1
   def show
-<<<<<<< HEAD
-    photo_urls = @property.photos.map do |photo|
-      rails_blob_url(photo)
-    end
-    render json: @property.as_json.merge({
-      photo_urls: photo_urls
-    }).merge({ user: @property.user })
-=======
     photo_urls = @property.photos.attached? ? @property.photos.map { |photo| rails_blob_url(photo) } : []
     render json: @property.as_json.merge({ photo_urls: photo_urls }).merge({ user: @property.user })
->>>>>>> db2c995c3ab5958beca437d8d1033bb3dc15955d
   end
 
 
@@ -44,17 +35,12 @@ class PropertiesController < ApplicationController
       if params[:property][:photos]
         params[:property][:photos].each do |photo|
           @property.photos.attach(photo)
-<<<<<<< HEAD
-        end  # <-- This is missing
-=======
         end
->>>>>>> db2c995c3ab5958beca437d8d1033bb3dc15955d
       end
       render json: @property, status: :created, location: @property
     else
       render json: @property.errors, status: :unprocessable_entity
     end
-
   end
 
 
@@ -62,15 +48,9 @@ class PropertiesController < ApplicationController
   # PATCH/PUT /properties/1
   def update
     if @property.update(property_params)
-<<<<<<< HEAD
-      if params[:property][:photos].present?
-        @property.photos.purge # Remove all existing photos
-        Array(params[:property][:photos]).each do |photo|
-=======
       # Attach new photos if they exist
       if params[:property][:photos]
         params[:property][:photos].each do |photo|
->>>>>>> db2c995c3ab5958beca437d8d1033bb3dc15955d
           @property.photos.attach(photo)
         end
       end
@@ -87,13 +67,6 @@ class PropertiesController < ApplicationController
   end
 
   private
-
-    def upload_photo
-      photo = params[:property][:photos]
-      result = Cloudinary::Uploader.upload(photo.path)
-      @property.update(photo_url: result["url"])
-    end
-
     # Use callbacks to share common setup or constraints between actions.
     def set_property
       @property = Property.find(params[:id])
@@ -101,11 +74,7 @@ class PropertiesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def property_params
-<<<<<<< HEAD
-      params.require(:property).permit(:user_id, :title, :price, :description, :private, photos: [])
-=======
       params.require(:property).permit(:user_id, :title, :price, :description, :private, :city, photos: [])
->>>>>>> db2c995c3ab5958beca437d8d1033bb3dc15955d
     end
 
     def check_ownership
