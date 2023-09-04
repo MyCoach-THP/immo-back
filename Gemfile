@@ -58,5 +58,5 @@ end
 
 gem "devise", "~> 4.9"
 gem "rack-cors", "~> 2.0"
-
+gem 'cloudinary'
 gem "dotenv", "~> 2.8"
