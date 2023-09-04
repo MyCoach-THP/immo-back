@@ -1,3 +1,5 @@
+require 'cloudinary'
+
 class PropertiesController < ApplicationController
   before_action :set_property, only: %i[ show update destroy ]
   before_action :authenticate_user!, only: [:new, :create]
@@ -19,9 +21,8 @@ class PropertiesController < ApplicationController
 
   # GET /properties/1
   def show
-    render json: @property.as_json.merge({
-      photo_url: @property.photo.attached? ? rails_blob_url(@property.photo) : nil
-    }).merge({ user: @property.user })
+    photo_urls = @property.photos.attached? ? @property.photos.map { |photo| rails_blob_url(photo) } : []
+    render json: @property.as_json.merge({ photo_urls: photo_urls }).merge({ user: @property.user })
   end
 
 
@@ -31,8 +32,10 @@ class PropertiesController < ApplicationController
     
     if @property.save
       # Attach the photo if it exists
-      if params[:property][:photo]
-        @property.photo.attach(params[:property][:photo])
+      if params[:property][:photos]
+        params[:property][:photos].each do |photo|
+          @property.photos.attach(photo)
+        end
       end
       render json: @property, status: :created, location: @property
     else
@@ -41,14 +44,22 @@ class PropertiesController < ApplicationController
   end
 
 
+
   # PATCH/PUT /properties/1
   def update
     if @property.update(property_params)
+      # Attach new photos if they exist
+      if params[:property][:photos]
+        params[:property][:photos].each do |photo|
+          @property.photos.attach(photo)
+        end
+      end
       render json: @property
     else
       render json: @property.errors, status: :unprocessable_entity
     end
   end
+
 
   # DELETE /properties/1
   def destroy
@@ -63,7 +74,7 @@ class PropertiesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def property_params
-      params.require(:property).permit(:user_id, :title, :price, :description, :private, :photo, :city)
+      params.require(:property).permit(:user_id, :title, :price, :description, :private, :city, photos: [])
     end
 
     def check_ownership
