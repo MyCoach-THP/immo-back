@@ -27,6 +27,7 @@ users.each do |user|
       title: Faker::Movies::LordOfTheRings.location,
       price: Faker::Number.between(from: 100000, to: 1000000),
       description: Faker::Lorem.paragraph_by_chars(number: 200, supplemental: false),
+      city: Faker::Address.city.upcase,
       private: false
     )
   end

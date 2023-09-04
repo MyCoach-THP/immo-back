@@ -9,6 +9,8 @@ class PropertiesController < ApplicationController
   def index
     if params[:user_id]
       @properties = Property.where(user_id: params[:user_id])
+    elsif params[:city]
+      @properties = Property.where(city: params[:city])
     else
       @properties = Property.all
     end
@@ -61,7 +63,7 @@ class PropertiesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def property_params
-      params.require(:property).permit(:user_id, :title, :price, :description, :private, :photo)
+      params.require(:property).permit(:user_id, :title, :price, :description, :private, :photo, :city)
     end
 
     def check_ownership
