@@ -1,9 +1,10 @@
 require 'cloudinary'
 
 class PropertiesController < ApplicationController
-  before_action :set_property, only: %i[ show update destroy ]
+  before_action :set_property, only: %i[ show update destroy delete_photo ]  # Added :delete_photo
   before_action :authenticate_user!, only: [:new, :create]
-  before_action :check_ownership, only: [:edit, :update, :destroy]
+  before_action :check_ownership, only: [:edit, :update, :destroy, :delete_photo]  # Added :delete_photo
+
   include Rails.application.routes.url_helpers
 
 
@@ -29,35 +30,42 @@ class PropertiesController < ApplicationController
   # POST /properties
   def create
     @property = current_user.properties.new(property_params)
-    
     if @property.save
-      # Attach the photo if it exists
-      if params[:property][:photos]
-        params[:property][:photos].each do |photo|
-          @property.photos.attach(photo)
-        end
-      end
+      attach_photos if params[:property][:photos]
       render json: @property, status: :created, location: @property
     else
       render json: @property.errors, status: :unprocessable_entity
     end
   end
 
-
-
   # PATCH/PUT /properties/1
   def update
-    if @property.update(property_params)
-      # Attach new photos if they exist
+    property = Property.find(params[:id])
+    if property.update(property_params.except(:photos))
       if params[:property][:photos]
         params[:property][:photos].each do |photo|
-          @property.photos.attach(photo)
+          property.photos.attach(photo)
         end
       end
-      render json: @property
+      render json: property, status: :ok
     else
-      render json: @property.errors, status: :unprocessable_entity
+      render json: { errors: property.errors }, status: :unprocessable_entity
     end
+  end
+
+  def delete_photo
+    puts "Received Photo ID: #{params[:photo_id]}"  # Debug log
+    photo = @property.photos.find(params[:photo_id])
+
+    if photo
+      photo.purge
+      render json: { message: 'Photo deleted successfully' }, status: :ok
+    else
+      render json: { error: 'Photo not found' }, status: :not_found
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    puts "Exception caught: #{e.message}"  # Debug log
+    render json: { error: 'Photo not found' }, status: :not_found
   end
 
 
@@ -67,6 +75,13 @@ class PropertiesController < ApplicationController
   end
 
   private
+
+    def attach_photos
+      params[:property][:photos].each do |photo|
+        @property.photos.attach(photo)
+      end
+    end
+
     # Use callbacks to share common setup or constraints between actions.
     def set_property
       @property = Property.find(params[:id])
@@ -78,10 +93,15 @@ class PropertiesController < ApplicationController
     end
 
     def check_ownership
-      @property = Property.find(params[:id])
+      puts "Current Property's User: #{@property.user.id}"  # Debug log
+      puts "Current User: #{current_user.id}"  # Debug log
+      
       unless @property.user == current_user
+        puts "Ownership Check Failed!"  
         render json: { error: "Vous n'avez pas la permission d'effectuer cette action." }, status: :forbidden
       end
     end
+
+
 
 end
