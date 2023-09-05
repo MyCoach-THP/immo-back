@@ -19,15 +19,17 @@ end
 users = User.all
 
 puts "Users ok"
+cities = ["PARIS", "MONTPELLIER", "TOULOUSE", "BORDEAUX", "MARSEILLE", "LILLE", "NICE", "NANTES", "RENNES"]
 
 users.each do |user|
   3.times do
+    newCity = cities.sample
     Property.create!(
       user: user,
       title: Faker::Movies::LordOfTheRings.location,
       price: Faker::Number.between(from: 100000, to: 1000000),
       description: Faker::Lorem.paragraph_by_chars(number: 200, supplemental: false),
-      city: Faker::Address.city.upcase,
+      city: newCity,
       private: false
     )
   end
