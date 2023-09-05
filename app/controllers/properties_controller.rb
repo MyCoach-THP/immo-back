@@ -22,10 +22,9 @@ class PropertiesController < ApplicationController
 
   # GET /properties/1
   def show
-    photo_urls = @property.photos.attached? ? @property.photos.map { |photo| rails_blob_url(photo) } : []
-    render json: @property.as_json.merge({ photo_urls: photo_urls }).merge({ user: @property.user })
+    photos = @property.photos.attached? ? @property.photos.map { |photo| {id: photo.id, url: rails_blob_url(photo) } } : []
+    render json: @property.as_json.merge({ photos: photos}).merge({ user: @property.user })
   end
-
 
   # POST /properties
   def create
@@ -55,7 +54,12 @@ class PropertiesController < ApplicationController
 
   def delete_photo
     puts "Received Photo ID: #{params[:photo_id]}"  # Debug log
-    photo = @property.photos.find(params[:photo_id])
+    begin
+      photoId = params[:photo_id]
+    photo = @property.photos.find_by(id: photoId)
+    rescue => e
+      puts "Erreur lors de la suppression d'une photo : " +e
+    end
 
     if photo
       photo.purge
@@ -101,7 +105,5 @@ class PropertiesController < ApplicationController
         render json: { error: "Vous n'avez pas la permission d'effectuer cette action." }, status: :forbidden
       end
     end
-
-
 
 end
