@@ -1,7 +1,11 @@
 # config/routes.rb
 
 Rails.application.routes.draw do
-  resources :properties
+  resources :properties do
+    member do
+      delete :delete_photo, to: 'properties#delete_photo'
+    end
+  end
   resources :test
   resources :password_resets, only: [:create, :edit, :update], param: :id
   devise_for :users,
